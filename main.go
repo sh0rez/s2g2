@@ -47,6 +47,12 @@ func run() error {
 		return err
 	}
 
+	// test filesystem connection
+	_, err = fs.ReadDir(src, ".")
+	if err != nil {
+		return err
+	}
+
 	syncers := []Syncer{
 		syncer[Dashboard]{NewDashboardProvider(api)},
 		syncer[Datasource]{NewDatasourceProvider(api)},
