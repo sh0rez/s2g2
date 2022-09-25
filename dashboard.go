@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"log"
 	"path/filepath"
@@ -23,8 +24,16 @@ type DashboardProvider struct {
 func (d *DashboardProvider) Store(db Dashboard) error {
 	db.Overwrite = true
 
-	_, err := d.api.NewDashboard(grafana.Dashboard(db))
-	return err
+	if _, err := d.api.FolderByUID(db.FolderUID); err != nil {
+		if _, err := d.api.NewFolder(db.FolderUID, db.FolderUID); err != nil {
+			return fmt.Errorf("folder '%s': %w", db.FolderUID, err)
+		}
+	}
+
+	if _, err := d.api.NewDashboard(grafana.Dashboard(db)); err != nil {
+		return fmt.Errorf("dashboard '%s': %w", db.Model["uid"], err)
+	}
+	return nil
 }
 
 func (d *DashboardProvider) Parse(src fs.FS) ([]Dashboard, error) {
@@ -43,7 +52,7 @@ func (d *DashboardProvider) Parse(src fs.FS) ([]Dashboard, error) {
 
 		var db Dashboard
 		db.FolderUID = strings.TrimPrefix(filepath.Dir(name), "dashboards/")
-		if err := json.NewDecoder(f).Decode(db.Model); err != nil {
+		if err := json.NewDecoder(f).Decode(&db.Model); err != nil {
 			log.Printf("%s: %s", name, err)
 			continue
 		}

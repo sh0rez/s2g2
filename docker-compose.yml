@@ -6,3 +6,8 @@ services:
       - 3000:3000
     environment:
       GF_FEATURE_TOGGLES_ENABLE: swaggerUi
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports: [9090:9090]

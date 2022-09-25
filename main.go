@@ -70,17 +70,21 @@ type syncer[T any] struct {
 }
 
 func (s syncer[T]) Sync(src fs.FS, t Trigger) error {
-	for range t {
+	for ; true; <-t {
 		ts, err := s.Provider.Parse(src)
 		if err != nil {
 			return err
 		}
 
+		ok := 0
 		for _, t := range ts {
 			if err := s.Provider.Store(t); err != nil {
 				log.Println(err)
+				continue
 			}
+			ok++
 		}
+		log.Printf("%T: %d/%d ok", *new(T), ok, len(ts))
 	}
 
 	return nil
